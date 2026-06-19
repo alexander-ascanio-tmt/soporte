@@ -1,10 +1,14 @@
 using Conexiones.Web.Models.Api;
 using Conexiones.Web.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Conexiones.Web.Controllers.Api;
 
 [ApiController]
+[AllowAnonymous]
+[EnableCors("ExtensionApi")]
 [Route("api/client-connections")]
 public class ClientConnectionsApiController(
     IClientConnectionLookupService lookupService,
@@ -41,8 +45,12 @@ public class ClientConnectionsApiController(
             return Unauthorized(new { ok = false, error = "Token inválido." });
         }
 
-        var customers = request.Customers ?? [];
-        var result = await lookupService.LookupBatchAsync(customers, cancellationToken);
+        if (request.Customers is null || request.Customers.Count == 0)
+        {
+            return BadRequest(new { ok = false, error = "Falta customers[] en el body." });
+        }
+
+        var result = await lookupService.LookupBatchAsync(request.Customers, cancellationToken);
         return Ok(result);
     }
 

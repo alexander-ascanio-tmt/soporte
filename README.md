@@ -89,6 +89,45 @@ En producción, apunte `TeamSupportConnection` al servidor Azure PostgreSQL de T
 }
 ```
 
+## API para extensión TeamSupport (solo lectura)
+
+Expone `client_connections` en JSON compatible con la extensión de navegador. La búsqueda es **exacta** (sin normalización): compara el texto recibido con `TeamSupportClientName` o `TeamSupportClientRazonSocial`.
+
+Configure el token en `ExtensionApi:Token` (`appsettings.json` o User Secrets).
+
+### Consulta individual
+
+```http
+GET /api/client-connections/lookup?q=ABAD IMPORT EXPORT SL&token=SU_TOKEN
+```
+
+Respuesta:
+
+```json
+{
+  "ok": true,
+  "match": "ABAD IMPORT EXPORT SL",
+  "Conexion": "GOToAssist",
+  "Observaciones": "",
+  "Contacto": "Soporte N2",
+  "Telefono": "+34 600 000 000",
+  "Email": "soporte@empresa.com"
+}
+```
+
+### Consulta en lote
+
+```http
+POST /api/client-connections/lookup/batch?token=SU_TOKEN
+Content-Type: application/json
+
+{ "customers": ["ABAD IMPORT EXPORT SL", "OTRO CLIENTE"] }
+```
+
+Si hay varias conexiones para el mismo cliente, `Conexion` y `Observaciones` se concatenan; `Contacto`, `Telefono` y `Email` provienen del registro más reciente.
+
+CORS habilitado para `*.teamsupport.com`.
+
 ## Comandos útiles
 
 ```bash
