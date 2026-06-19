@@ -70,6 +70,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddScoped<IDatabaseMigrationService, DatabaseMigrationService>();
 builder.Services.AddScoped<IConnectionTypeSeedService, ConnectionTypeSeedService>();
 builder.Services.AddScoped<IClientConnectionLookupService, ClientConnectionLookupService>();
+builder.Services.AddScoped<ITicketUrgencyService, TicketUrgencyService>();
 
 var app = builder.Build();
 

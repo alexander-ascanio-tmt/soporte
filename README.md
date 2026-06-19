@@ -28,7 +28,7 @@ Esto crea dos bases de datos en PostgreSQL:
 
 | Base de datos      | Uso                                      |
 |--------------------|------------------------------------------|
-| `conexiones_db`    | Identity, tipos de conexión y registros  |
+| `soporte_ts_db`    | Identity, tipos de conexión y registros  |
 | `teamsupport_db`   | Lectura de clientes (solo lectura)       |
 
 ### 2. Configurar Microsoft Entra ID
@@ -59,7 +59,7 @@ Las migraciones de EF Core se aplican automáticamente al arrancar.
 ## Estructura funcional
 
 - **Inicio** — Panel de acceso al portal
-- **Registrar cliente** — Lee clientes activos de `teamsupport_db` y registra una conexión en `conexiones_db`
+- **Registrar cliente** — Lee clientes activos de `teamsupport_db` y registra una conexión en `soporte_ts_db`
 - **Conexiones** — Listado de registros realizados
 - **Tipos de conexión** — CRUD completo sobre la tabla `connection_types`
 
@@ -84,7 +84,7 @@ En producción, apunte `TeamSupportConnection` al servidor Azure PostgreSQL de T
 
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Host=localhost;Port=5432;Database=conexiones_db;Username=postgres;Password=postgres",
+  "DefaultConnection": "Host=localhost;Port=5432;Database=soporte_ts_db;Username=postgres;Password=postgres",
   "TeamSupportConnection": "Host=localhost;Port=5432;Database=teamsupport_db;Username=postgres;Password=postgres"
 }
 ```
@@ -127,6 +127,38 @@ Content-Type: application/json
 Si hay varias conexiones para el mismo cliente, `Conexion` y `Observaciones` se concatenan; `Contacto`, `Telefono` y `Email` provienen del registro más reciente.
 
 CORS habilitado para `*.teamsupport.com`.
+
+## API urgencia de tickets (extensión ts-severity_ext)
+
+Tabla `ticket_urgencies` en `soporte_ts_db`: número de ticket + indicador urgente.
+
+Autenticación: query `token` o cabecera `X-Api-Key` (mismo valor que `ExtensionApi:Token`).
+
+### Consultar urgencia
+
+```http
+GET /api/ticket-urgency/141499?token=SU_TOKEN
+```
+
+Respuesta:
+
+```json
+{
+  "ok": true,
+  "ticketNumber": "141499",
+  "isUrgent": true,
+  "updatedAt": "2026-06-19T13:10:00Z"
+}
+```
+
+### Marcar / desmarcar urgente
+
+```http
+PUT /api/ticket-urgency?token=SU_TOKEN
+Content-Type: application/json
+
+{ "ticketNumber": "141499", "isUrgent": true }
+```
 
 ## Comandos útiles
 

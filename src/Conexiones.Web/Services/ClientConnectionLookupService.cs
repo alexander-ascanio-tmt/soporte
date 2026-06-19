@@ -134,6 +134,8 @@ public class ClientConnectionLookupService(ApplicationDbContext dbContext) : ICl
         {
             Ok = true,
             Match = matchLabel,
+            NombreCliente = primary.TeamSupportClientName ?? string.Empty,
+            RazonSocial = primary.TeamSupportClientRazonSocial ?? string.Empty,
             Conexion = conexion,
             Observaciones = observaciones,
             Contacto = primary.ConnectionType.Contact ?? string.Empty,

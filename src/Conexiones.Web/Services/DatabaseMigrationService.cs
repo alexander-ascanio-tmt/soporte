@@ -15,7 +15,7 @@ public class DatabaseMigrationService(
 {
     public async Task ApplyMigrationsAsync(CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Aplicando migraciones en conexiones_db...");
+        logger.LogInformation("Aplicando migraciones en soporte_ts_db...");
         await applicationDbContext.Database.MigrateAsync(cancellationToken);
         logger.LogInformation("Migraciones aplicadas correctamente.");
     }

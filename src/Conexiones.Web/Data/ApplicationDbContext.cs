@@ -9,6 +9,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<ConnectionType> ConnectionTypes => Set<ConnectionType>();
     public DbSet<ClientConnection> ClientConnections => Set<ClientConnection>();
+    public DbSet<TicketUrgency> TicketUrgencies => Set<TicketUrgency>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -32,6 +33,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .WithMany(t => t.ClientConnections)
                 .HasForeignKey(e => e.ConnectionTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<TicketUrgency>(entity =>
+        {
+            entity.ToTable("ticket_urgencies");
+            entity.HasIndex(e => e.TicketNumber).IsUnique();
+            entity.Property(e => e.TicketNumber).HasMaxLength(50);
+            entity.Property(e => e.UpdatedByUserName).HasMaxLength(256);
         });
     }
 }

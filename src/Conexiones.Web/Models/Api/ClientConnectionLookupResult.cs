@@ -10,6 +10,12 @@ public sealed class ClientConnectionLookupResult
     [JsonPropertyName("match")]
     public string? Match { get; init; }
 
+    [JsonPropertyName("NombreCliente")]
+    public string NombreCliente { get; init; } = string.Empty;
+
+    [JsonPropertyName("RazonSocial")]
+    public string RazonSocial { get; init; } = string.Empty;
+
     [JsonPropertyName("Conexion")]
     public string Conexion { get; init; } = string.Empty;
 
