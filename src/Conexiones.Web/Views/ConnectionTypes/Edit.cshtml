@@ -1,0 +1,51 @@
+@model ConnectionType
+@{
+    ViewData["Title"] = "Editar tipo de conexión";
+}
+
+<h2>@ViewData["Title"]</h2>
+<hr />
+
+<form asp-action="Edit" method="post" class="row g-3" style="max-width: 600px;">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="CreatedAt" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="col-12">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Contact" class="form-label">Contacto (opcional)</label>
+        <input asp-for="Contact" class="form-control" />
+        <span asp-validation-for="Contact" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Phone" class="form-label">Teléfono (opcional)</label>
+        <input asp-for="Phone" class="form-control" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Email" class="form-label">E-mail (opcional)</label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="col-12 form-check">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        <a asp-action="Index" class="btn btn-link">Cancelar</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

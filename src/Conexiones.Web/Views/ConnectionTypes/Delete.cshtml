@@ -1,0 +1,34 @@
+@model ConnectionType
+@{
+    ViewData["Title"] = "Eliminar tipo de conexión";
+}
+
+<h2 class="text-danger">@ViewData["Title"]</h2>
+<hr />
+
+<div class="alert alert-warning">
+    ¿Confirma que desea eliminar el tipo de conexión <strong>@Model.Name</strong>?
+    @if (Model.ClientConnections.Count > 0)
+    {
+        <div class="mt-2 mb-0">
+            Este tipo tiene @Model.ClientConnections.Count registro(s) asociado(s) y no podrá eliminarse.
+        </div>
+    }
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Tipo</dt>
+    <dd class="col-sm-9">@Model.Name</dd>
+    <dt class="col-sm-3">Contacto</dt>
+    <dd class="col-sm-9">@(Model.Contact ?? "—")</dd>
+    <dt class="col-sm-3">Teléfono</dt>
+    <dd class="col-sm-9">@(Model.Phone ?? "—")</dd>
+    <dt class="col-sm-3">E-mail</dt>
+    <dd class="col-sm-9">@(Model.Email ?? "—")</dd>
+</dl>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger" @(Model.ClientConnections.Count > 0 ? "disabled" : null)>Eliminar</button>
+    <a asp-action="Index" class="btn btn-link">Cancelar</a>
+</form>
