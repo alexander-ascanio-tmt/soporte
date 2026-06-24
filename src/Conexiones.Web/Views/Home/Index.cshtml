@@ -6,14 +6,14 @@
     <div class="col-lg-7">
         <h1 class="display-5 fw-bold text-primary">Portal de Conexiones</h1>
         <p class="lead text-muted mt-3">
-            Registre clientes desde TeamSupport y administre los tipos de conexión
+            Registre conexiones desde TeamSupport y administre los tipos de conexión
             de su organización.
         </p>
         @if (User.Identity?.IsAuthenticated == true)
         {
             <div class="d-flex flex-wrap gap-2 mt-4">
                 <a class="btn btn-primary btn-lg" asp-controller="ClientConnections" asp-action="Register">
-                    Registrar cliente
+                    Registrar conexión
                 </a>
                 <a class="btn btn-outline-primary btn-lg" asp-controller="ConnectionTypes" asp-action="Index">
                     Tipos de conexión
