@@ -1,0 +1,72 @@
+@model EditClientConnectionViewModel
+@{
+    ViewData["Title"] = "Editar conexión";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">@ViewData["Title"]</h2>
+        <p class="text-muted mb-0">Modifique el tipo de conexión o las notas del registro.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index">Volver al listado</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light fw-semibold">Cliente (TeamSupport)</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.TeamSupportClientName)</dt>
+                    <dd class="col-sm-8 fw-semibold">@Model.TeamSupportClientName</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.TeamSupportClientCode)</dt>
+                    <dd class="col-sm-8">@(Model.TeamSupportClientCode ?? "—")</dd>
+
+                    <dt class="col-sm-4">@Html.DisplayNameFor(m => m.TeamSupportClientRazonSocial)</dt>
+                    <dd class="col-sm-8">@(Model.TeamSupportClientRazonSocial ?? "—")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light fw-semibold">Datos de la conexión</div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post" class="row g-3">
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="TeamSupportClientName" />
+                    <input type="hidden" asp-for="TeamSupportClientCode" />
+                    <input type="hidden" asp-for="TeamSupportClientRazonSocial" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="col-md-6">
+                        <label asp-for="ConnectionTypeId" class="form-label fw-semibold"></label>
+                        <select asp-for="ConnectionTypeId" class="form-select">
+                            <option value="">-- Seleccione un tipo --</option>
+                            @foreach (var type in Model.ConnectionTypes)
+                            {
+                                <option value="@type.Id">@type.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ConnectionTypeId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Notes" class="form-label fw-semibold">Notas <span class="text-muted fw-normal">(opcional)</span></label>
+                        <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Observaciones sobre la conexión"></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12 d-flex flex-wrap gap-2 pt-2">
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

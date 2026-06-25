@@ -54,6 +54,10 @@ body {
   border-top-right-radius: 0.375rem;
 }
 
+.table-connections tbody tr.table-row-link {
+  cursor: pointer;
+}
+
 .register-page {
   padding-bottom: 1rem;
 }

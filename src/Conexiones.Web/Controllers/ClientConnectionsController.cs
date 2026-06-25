@@ -27,6 +27,26 @@ public class ClientConnectionsController(
         return View(connections);
     }
 
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id is null)
+        {
+            return NotFound();
+        }
+
+        var connection = await dbContext.ClientConnections
+            .AsNoTracking()
+            .Include(c => c.ConnectionType)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (connection is null)
+        {
+            return NotFound();
+        }
+
+        return View(connection);
+    }
+
     public async Task<IActionResult> Register(string? searchName)
     {
         var model = await BuildRegisterViewModelAsync(searchName);
@@ -93,6 +113,98 @@ public class ClientConnectionsController(
 
         TempData["Success"] = $"Conexión registrada para el cliente {client.DisplayName}.";
         return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> Edit(int? id)
+    {
+        if (id is null)
+        {
+            return NotFound();
+        }
+
+        var connection = await dbContext.ClientConnections
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (connection is null)
+        {
+            return NotFound();
+        }
+
+        var model = new EditClientConnectionViewModel
+        {
+            Id = connection.Id,
+            TeamSupportClientName = connection.TeamSupportClientName,
+            TeamSupportClientCode = connection.TeamSupportClientCode,
+            TeamSupportClientRazonSocial = connection.TeamSupportClientRazonSocial,
+            ConnectionTypeId = connection.ConnectionTypeId,
+            Notes = connection.Notes
+        };
+
+        await PopulateEditListsAsync(model);
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, EditClientConnectionViewModel model)
+    {
+        if (id != model.Id)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await PopulateEditListsAsync(model);
+            return View(model);
+        }
+
+        var connection = await dbContext.ClientConnections.FindAsync(id);
+        if (connection is null)
+        {
+            return NotFound();
+        }
+
+        var typeExists = await dbContext.ConnectionTypes
+            .AnyAsync(t => t.Id == model.ConnectionTypeId && t.IsActive);
+
+        if (!typeExists)
+        {
+            ModelState.AddModelError(nameof(model.ConnectionTypeId), "El tipo de conexión seleccionado no es válido.");
+            await PopulateEditListsAsync(model);
+            return View(model);
+        }
+
+        var duplicate = await dbContext.ClientConnections
+            .AnyAsync(c =>
+                c.TeamSupportClientId == connection.TeamSupportClientId &&
+                c.ConnectionTypeId == model.ConnectionTypeId &&
+                c.Id != id);
+
+        if (duplicate)
+        {
+            ModelState.AddModelError(string.Empty, "Ya existe un registro para este cliente y tipo de conexión.");
+            await PopulateEditListsAsync(model);
+            return View(model);
+        }
+
+        connection.ConnectionTypeId = model.ConnectionTypeId;
+        connection.Notes = model.Notes;
+        await dbContext.SaveChangesAsync();
+
+        TempData["Success"] = $"Conexión actualizada para {connection.TeamSupportClientName}.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    private async Task PopulateEditListsAsync(EditClientConnectionViewModel model)
+    {
+        model.ConnectionTypes = await dbContext.ConnectionTypes
+            .AsNoTracking()
+            .Where(t => t.IsActive || t.Id == model.ConnectionTypeId)
+            .OrderBy(t => t.Name)
+            .Select(t => new ConnectionTypeOption { Id = t.Id, Name = t.Name })
+            .ToListAsync();
     }
 
     private async Task<RegisterClientConnectionViewModel> BuildRegisterViewModelAsync(string? searchName)

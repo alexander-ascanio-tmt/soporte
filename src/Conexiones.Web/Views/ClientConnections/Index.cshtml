@@ -25,12 +25,17 @@ else
                     <th>Registrado</th>
                     <th>Por</th>
                     <th>Notas</th>
+                    <th class="text-end">Acciones</th>
                 </tr>
             </thead>
             <tbody>
             @foreach (var item in Model)
             {
-                <tr>
+                <tr class="table-row-link"
+                    data-href="@Url.Action("Details", new { id = item.Id })"
+                    role="link"
+                    tabindex="0"
+                    aria-label="Ver detalle de @item.TeamSupportClientName">
                     <td class="fw-semibold">@item.TeamSupportClientName</td>
                     <td>@(item.TeamSupportClientCode ?? "—")</td>
                     <td>@(item.TeamSupportClientRazonSocial ?? "—")</td>
@@ -38,9 +43,40 @@ else
                     <td>@item.RegisteredAt.ToLocalTime().ToString("g")</td>
                     <td>@(item.RegisteredByUserName ?? "—")</td>
                     <td>@(string.IsNullOrWhiteSpace(item.Notes) ? "—" : item.Notes)</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
+                    </td>
                 </tr>
             }
             </tbody>
         </table>
     </div>
+}
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('tr.table-row-link').forEach((row) => {
+            const navigate = () => {
+                const href = row.dataset.href;
+                if (href) {
+                    window.location.href = href;
+                }
+            };
+
+            row.addEventListener('click', (event) => {
+                if (event.target.closest('a, button')) {
+                    return;
+                }
+
+                navigate();
+            });
+
+            row.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    navigate();
+                }
+            });
+        });
+    </script>
 }
