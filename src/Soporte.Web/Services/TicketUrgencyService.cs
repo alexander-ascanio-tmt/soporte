@@ -1,9 +1,9 @@
-using Conexiones.Web.Data;
-using Conexiones.Web.Models.Api;
-using Conexiones.Web.Models.Entities;
+using Soporte.Web.Data;
+using Soporte.Web.Models.Api;
+using Soporte.Web.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Conexiones.Web.Services;
+namespace Soporte.Web.Services;
 
 public class TicketUrgencyService(ApplicationDbContext dbContext) : ITicketUrgencyService
 {

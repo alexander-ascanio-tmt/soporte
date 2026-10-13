@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Conexiones.Web.Models.TeamSupport;
+namespace Soporte.Web.Models.TeamSupport;
 
 /// <summary>
 /// Entidad de solo lectura mapeada a public.customers en teamsupport_db (TeamSupport / Telematel).

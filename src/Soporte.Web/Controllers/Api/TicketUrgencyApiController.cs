@@ -1,10 +1,10 @@
-using Conexiones.Web.Models.Api;
-using Conexiones.Web.Services;
+using Soporte.Web.Models.Api;
+using Soporte.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Conexiones.Web.Controllers.Api;
+namespace Soporte.Web.Controllers.Api;
 
 [ApiController]
 [AllowAnonymous]

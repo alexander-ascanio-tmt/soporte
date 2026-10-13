@@ -1,4 +1,4 @@
-namespace Conexiones.Web.Models;
+namespace Soporte.Web.Models;
 
 public class ErrorViewModel
 {

@@ -1,0 +1,285 @@
+@model UrgentTicketListPageViewModel
+@{
+    ViewData["Title"] = "Tickets urgentes";
+
+    bool IsSelected(string? current, string value) =>
+        string.Equals(current, value, StringComparison.Ordinal);
+
+    string StatusDotClass(string status) => status.ToLowerInvariant() switch
+    {
+        "new" or "nuevo" or "open" or "abierto" => "is-new",
+        "in progress" or "en progreso" => "is-progress",
+        "resolved" or "closed" or "cerrado" or "resuelto" => "is-closed",
+        _ => "is-default"
+    };
+
+    string FormatDate(DateTime? value)
+    {
+        if (!value.HasValue || value.Value == default)
+        {
+            return "—";
+        }
+
+        var date = value.Value.Kind == DateTimeKind.Utc
+            ? value.Value.ToLocalTime()
+            : value.Value;
+        return date.ToString("dd/MM/yyyy HH:mm");
+    }
+
+    string SortValue(DateTime? value) =>
+        value.HasValue && value.Value != default
+            ? value.Value.ToUniversalTime().ToString("o")
+            : "";
+
+    string TicketSortNumber(string ticketNumber)
+    {
+        var digits = new string(ticketNumber.Where(char.IsDigit).ToArray());
+        return digits.Length > 0 ? digits : "0";
+    }
+}
+
+<div class="urgent-tickets-page">
+    <h2 class="urgent-tickets-title">Tickets urgentes</h2>
+    <p class="text-muted mb-3">Tickets marcados como urgentes en Portal Team Support mediante extensión de navegador, enriquecidos desde TeamSupport (solo lectura).</p>
+
+    <form method="get" asp-controller="UrgentTickets" asp-action="Index" id="urgent-tickets-filter-form">
+        <div class="urgent-toolbar">
+            <div class="urgent-search">
+                <span class="urgent-search-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="6.5"/>
+                        <path d="M16 16.5 21 21.5"/>
+                    </svg>
+                </span>
+                <input type="text"
+                       name="search"
+                       value="@Model.Query.Search"
+                       class="form-control urgent-search-input"
+                       placeholder="Buscar por número, asunto o descripción" />
+            </div>
+            <button type="submit" class="btn urgent-search-button">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 5h16l-6.2 7.4V19l-3.6 2v-8.6Z"/>
+                </svg>
+                Buscar
+            </button>
+            @if (Model.HasActiveFilters)
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary urgent-clear-button">Limpiar</a>
+            }
+        </div>
+
+        <div class="urgent-filters">
+            <div class="urgent-filters-label">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 5h16l-6.2 7.4V19l-3.6 2v-8.6Z"/>
+                </svg>
+                <span>Filtros</span>
+            </div>
+
+            <label class="urgent-filter">
+                <span>Cliente:</span>
+                <select name="customer" class="form-select form-select-sm urgent-filter-select" data-auto-submit>
+                    <option value="">Todos</option>
+                    @foreach (var option in Model.Customers)
+                    {
+                        <option value="@option" selected="@IsSelected(Model.Query.Customer, option)">@option</option>
+                    }
+                </select>
+            </label>
+
+            <label class="urgent-filter">
+                <span>Producto:</span>
+                <select name="product" class="form-select form-select-sm urgent-filter-select" data-auto-submit>
+                    <option value="">Todos</option>
+                    @foreach (var option in Model.Products)
+                    {
+                        <option value="@option" selected="@IsSelected(Model.Query.Product, option)">@option</option>
+                    }
+                </select>
+            </label>
+
+            <label class="urgent-filter">
+                <span>Estado:</span>
+                <select name="estado" class="form-select form-select-sm urgent-filter-select" data-auto-submit>
+                    <option value="">Todos</option>
+                    @foreach (var option in Model.Statuses)
+                    {
+                        <option value="@option" selected="@IsSelected(Model.Query.Status, option)">@option</option>
+                    }
+                </select>
+            </label>
+
+            <label class="urgent-filter">
+                <span>Prioridad:</span>
+                <select name="priority" class="form-select form-select-sm urgent-filter-select" data-auto-submit>
+                    <option value="">Todos</option>
+                    @foreach (var option in Model.Priorities)
+                    {
+                        <option value="@option" selected="@IsSelected(Model.Query.Priority, option)">@option</option>
+                    }
+                </select>
+            </label>
+
+            <label class="urgent-filter">
+                <span>Tickets con Acciones:</span>
+                <select name="hasActions" class="form-select form-select-sm urgent-filter-select" data-auto-submit>
+                    <option value="" selected="@IsSelected(Model.Query.HasActions, null)">Todos</option>
+                    <option value="true" selected="@IsSelected(Model.Query.HasActions, "true")">Sí</option>
+                    <option value="false" selected="@IsSelected(Model.Query.HasActions, "false")">No</option>
+                </select>
+            </label>
+
+            <label class="urgent-filter urgent-filter-end">
+                <span>Mostrar:</span>
+                <select name="limit" class="form-select form-select-sm urgent-filter-select" data-auto-submit>
+                    <option value="100" selected="@IsSelected(Model.Query.Limit, "100")">Últimos 100</option>
+                    <option value="200" selected="@IsSelected(Model.Query.Limit, "200")">Últimos 200</option>
+                    <option value="all" selected="@IsSelected(Model.Query.Limit, "all")">Todos</option>
+                </select>
+            </label>
+        </div>
+    </form>
+
+    @if (Model.Tickets.Count == 0)
+    {
+        <div class="alert alert-info">
+            @(Model.TotalCount == 0 && !Model.HasActiveFilters
+                ? "No hay tickets marcados como urgentes."
+                : "No hay tickets urgentes que coincidan con la búsqueda o los filtros.")
+        </div>
+    }
+    else
+    {
+        <div class="urgent-tickets-wrap">
+            <table class="table urgent-tickets-table mb-0" id="urgent-tickets-table">
+                <colgroup>
+                    <col data-col="number" style="width: 8rem;" />
+                    <col data-col="subject" style="width: 18rem;" />
+                    <col data-col="customer" style="width: 14rem;" />
+                    <col data-col="status" style="width: 8rem;" />
+                    <col data-col="priority" style="width: 8rem;" />
+                    <col data-col="created" style="width: 11rem;" />
+                    <col data-col="urgent" style="width: 11rem;" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th data-col="number">
+                            <button type="button" class="urgent-th-sort" data-sort-type="number" aria-label="Ordenar por número">
+                                <span class="urgent-th-label">Número</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Número" tabindex="0"></span>
+                        </th>
+                        <th data-col="subject">
+                            <button type="button" class="urgent-th-sort" data-sort-type="text" aria-label="Ordenar por asunto">
+                                <span class="urgent-th-label">Asunto</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Asunto" tabindex="0"></span>
+                        </th>
+                        <th data-col="customer">
+                            <button type="button" class="urgent-th-sort" data-sort-type="text" aria-label="Ordenar por cliente">
+                                <span class="urgent-th-label">Cliente</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Cliente" tabindex="0"></span>
+                        </th>
+                        <th data-col="status">
+                            <button type="button" class="urgent-th-sort" data-sort-type="text" aria-label="Ordenar por estado">
+                                <span class="urgent-th-label">Estado</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Estado" tabindex="0"></span>
+                        </th>
+                        <th data-col="priority">
+                            <button type="button" class="urgent-th-sort" data-sort-type="text" aria-label="Ordenar por prioridad">
+                                <span class="urgent-th-label">Prioridad</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Prioridad" tabindex="0"></span>
+                        </th>
+                        <th data-col="created">
+                            <button type="button" class="urgent-th-sort" data-sort-type="date" aria-label="Ordenar por fecha de creación">
+                                <span class="urgent-th-label">Creado</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Creado" tabindex="0"></span>
+                        </th>
+                        <th data-col="urgent">
+                            <button type="button" class="urgent-th-sort" data-sort-type="date" aria-label="Ordenar por fecha de urgencia">
+                                <span class="urgent-th-label">Urgente</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Urgente" tabindex="0"></span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var ticket in Model.Tickets)
+                {
+                    <tr>
+                        <td data-sort-value="@TicketSortNumber(ticket.TicketNumber)">
+                            <span class="urgent-number-badge">@ticket.DisplayNumber</span>
+                        </td>
+                        <td class="urgent-subject" title="@ticket.Subject" data-sort-value="@ticket.Subject">@ticket.Subject</td>
+                        <td class="urgent-customer" title="@ticket.Customer" data-sort-value="@ticket.Customer">@ticket.Customer</td>
+                        <td data-sort-value="@ticket.Status">
+                            <span class="urgent-status-pill">
+                                <span class="urgent-status-dot @StatusDotClass(ticket.Status)"></span>
+                                @ticket.Status
+                            </span>
+                        </td>
+                        <td data-sort-value="@ticket.Priority">
+                            <span class="urgent-priority-pill">@ticket.Priority</span>
+                        </td>
+                        <td data-sort-value="@SortValue(ticket.CreatedAt)">
+                            <span class="urgent-date">
+                                <svg class="urgent-date-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="3.5" y="5" width="17" height="15" rx="2"/>
+                                    <path d="M8 3.5v4M16 3.5v4M3.5 10h17"/>
+                                </svg>
+                                @FormatDate(ticket.CreatedAt)
+                            </span>
+                        </td>
+                        <td data-sort-value="@SortValue(ticket.UrgentAt)">
+                            <span class="urgent-date">
+                                <svg class="urgent-date-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="8"/>
+                                    <path d="M8.5 12.2 11 14.7 16 9.5"/>
+                                </svg>
+                                @FormatDate(ticket.UrgentAt)
+                            </span>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/urgent-tickets.js" asp-append-version="true"></script>
+}

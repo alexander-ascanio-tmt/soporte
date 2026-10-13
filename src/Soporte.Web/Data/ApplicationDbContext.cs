@@ -1,8 +1,8 @@
-﻿using Conexiones.Web.Models.Entities;
+using Soporte.Web.Models.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Conexiones.Web.Data;
+namespace Soporte.Web.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
     : IdentityDbContext(options)

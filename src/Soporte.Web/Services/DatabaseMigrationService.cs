@@ -1,8 +1,8 @@
-using Conexiones.Web.Data;
-using Conexiones.Web.Models.Entities;
+using Soporte.Web.Data;
+using Soporte.Web.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Conexiones.Web.Services;
+namespace Soporte.Web.Services;
 
 public interface IDatabaseMigrationService
 {
@@ -15,7 +15,7 @@ public class DatabaseMigrationService(
 {
     public async Task ApplyMigrationsAsync(CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Aplicando migraciones en soporte_ts_db...");
+        logger.LogInformation("Aplicando migraciones en soporte_db...");
         await applicationDbContext.Database.MigrateAsync(cancellationToken);
         logger.LogInformation("Migraciones aplicadas correctamente.");
     }

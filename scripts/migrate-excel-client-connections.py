@@ -23,7 +23,7 @@ from pathlib import Path
 import openpyxl
 import psycopg2
 
-APPSETTINGS = Path(r"c:\Proyectos\Conexiones\src\Conexiones.Web\appsettings.Development.json")
+APPSETTINGS = Path(r"c:\Proyectos\Conexiones\src\Soporte.Web\appsettings.Development.json")
 DEFAULT_EXCEL = Path(r"c:\Users\ciro.ascanio\Downloads\Conexiones_revisado_contiene.xlsx")
 DEFAULT_REGISTERED_BY = "Migración Excel"
 

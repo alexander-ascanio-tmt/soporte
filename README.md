@@ -1,4 +1,4 @@
-# Portal Conexiones
+# Portal Soporte
 
 Portal web corporativo para registrar conexiones de clientes leídos desde TeamSupport, con autenticación Microsoft (Valsoft).
 
@@ -28,7 +28,7 @@ Esto crea dos bases de datos en PostgreSQL:
 
 | Base de datos      | Uso                                      |
 |--------------------|------------------------------------------|
-| `soporte_ts_db`    | Identity, tipos de conexión y registros  |
+| `soporte_db`    | Identity, tipos de conexión y registros  |
 | `teamsupport_db`   | Lectura de clientes (solo lectura)       |
 
 ### 2. Configurar Microsoft Entra ID
@@ -45,21 +45,21 @@ Registre la aplicación en el tenant de Valsoft y configure en `appsettings.Deve
 }
 ```
 
-En el registro de Azure AD, agregue la URI de redirección: `https://localhost:7xxx/signin-oidc` (ver puerto en `launchSettings.json`).
+En el registro de Azure AD, agregue la URI de redirección: `http://localhost:5271/signin-oidc`.
 
 ### 3. Ejecutar la aplicación
 
 ```bash
-dotnet restore Conexiones.sln
-dotnet run --project src/Conexiones.Web
+dotnet restore Soporte.sln
+dotnet run --project src/Soporte.Web
 ```
 
-Las migraciones de EF Core se aplican automáticamente al arrancar.
+La aplicación queda en `http://localhost:5271`. Las migraciones de EF Core se aplican automáticamente al arrancar.
 
 ## Estructura funcional
 
 - **Inicio** — Panel de acceso al portal
-- **Registrar cliente** — Lee clientes activos de `teamsupport_db` y registra una conexión en `soporte_ts_db`
+- **Registrar cliente** — Lee clientes activos de `teamsupport_db` y registra una conexión en `soporte_db`
 - **Conexiones** — Listado de registros realizados
 - **Tipos de conexión** — CRUD completo sobre la tabla `connection_types`
 
@@ -84,7 +84,7 @@ En producción, apunte `TeamSupportConnection` al servidor Azure PostgreSQL de T
 
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Host=localhost;Port=5432;Database=soporte_ts_db;Username=postgres;Password=postgres",
+  "DefaultConnection": "Host=localhost;Port=5432;Database=soporte_db;Username=postgres;Password=postgres",
   "TeamSupportConnection": "Host=localhost;Port=5432;Database=teamsupport_db;Username=postgres;Password=postgres"
 }
 ```
@@ -130,7 +130,7 @@ CORS habilitado para `*.teamsupport.com`.
 
 ## API urgencia de tickets (extensión ts-severity_ext)
 
-Tabla `ticket_urgencies` en `soporte_ts_db`: número de ticket + indicador urgente.
+Tabla `ticket_urgencies` en `soporte_db`: número de ticket + indicador urgente.
 
 Autenticación: query `token` o cabecera `X-Api-Key` (mismo valor que `ExtensionApi:Token`).
 
@@ -164,8 +164,8 @@ Content-Type: application/json
 
 ```bash
 # Crear nueva migración
-dotnet ef migrations add <Nombre> --project src/Conexiones.Web
+dotnet ef migrations add <Nombre> --project src/Soporte.Web
 
 # Aplicar migraciones manualmente
-dotnet ef database update --project src/Conexiones.Web
+dotnet ef database update --project src/Soporte.Web
 ```

@@ -1,13 +1,13 @@
-using Conexiones.Web.Data;
-using Conexiones.Web.Models.Entities;
-using Conexiones.Web.Models.TeamSupport;
-using Conexiones.Web.Models.ViewModels;
+using Soporte.Web.Data;
+using Soporte.Web.Models.Entities;
+using Soporte.Web.Models.TeamSupport;
+using Soporte.Web.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Conexiones.Web.Controllers;
+namespace Soporte.Web.Controllers;
 
 [Authorize]
 public class ClientConnectionsController(
@@ -17,14 +17,92 @@ public class ClientConnectionsController(
 {
     private const int MaxClientSearchResults = 100;
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(
+        string? search,
+        int? connectionTypeId,
+        string? registeredBy,
+        string? limit)
     {
-        var connections = await dbContext.ClientConnections
+        var query = new ClientConnectionListQuery
+        {
+            Search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(),
+            ConnectionTypeId = connectionTypeId is > 0 ? connectionTypeId : null,
+            RegisteredBy = string.IsNullOrWhiteSpace(registeredBy) ? null : registeredBy.Trim(),
+            Limit = limit switch
+            {
+                "200" => "200",
+                "all" => "all",
+                _ => "100"
+            }
+        };
+
+        var allConnections = await dbContext.ClientConnections
+            .AsNoTracking()
             .Include(c => c.ConnectionType)
             .OrderByDescending(c => c.RegisteredAt)
             .ToListAsync();
 
-        return View(connections);
+        var filtered = allConnections.Where(connection =>
+        {
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                var term = query.Search;
+                var matches =
+                    Contains(connection.TeamSupportClientName, term)
+                    || Contains(connection.TeamSupportClientCode, term)
+                    || Contains(connection.TeamSupportClientRazonSocial, term)
+                    || Contains(connection.Notes, term)
+                    || Contains(connection.ConnectionType.Name, term);
+
+                if (!matches)
+                {
+                    return false;
+                }
+            }
+
+            if (query.ConnectionTypeId.HasValue &&
+                connection.ConnectionTypeId != query.ConnectionTypeId.Value)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.RegisteredBy) &&
+                !string.Equals(connection.RegisteredByUserName, query.RegisteredBy, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return true;
+        }).ToList();
+
+        var visible = query.Limit switch
+        {
+            "200" => filtered.Take(200).ToList(),
+            "all" => filtered,
+            _ => filtered.Take(100).ToList()
+        };
+
+        var model = new ClientConnectionListPageViewModel
+        {
+            Connections = visible,
+            Query = query,
+            ConnectionTypes = allConnections
+                .Select(c => c.ConnectionType)
+                .GroupBy(t => t.Id)
+                .Select(g => new ConnectionTypeOption { Id = g.Key, Name = g.First().Name })
+                .OrderBy(t => t.Name)
+                .ToList(),
+            RegisteredByUsers = allConnections
+                .Select(c => c.RegisteredByUserName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => name!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .ToList(),
+            TotalCount = filtered.Count
+        };
+
+        return View(model);
     }
 
     public async Task<IActionResult> Details(int? id)
@@ -55,11 +133,19 @@ public class ClientConnectionsController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterClientConnectionViewModel model)
+    public async Task<IActionResult> Register(RegisterClientConnectionViewModel model, string? intent)
     {
+        if (string.Equals(intent, "search", StringComparison.OrdinalIgnoreCase))
+        {
+            ModelState.Clear();
+            await PopulateRegisterListsAsync(model, model.SearchName);
+            return View(model);
+        }
+
         if (!ModelState.IsValid)
         {
             await PopulateRegisterListsAsync(model, model.SearchName);
+            await ApplySelectedClientAsync(model, hideSearchResults: true);
             return View(model);
         }
 
@@ -81,6 +167,7 @@ public class ClientConnectionsController(
         {
             ModelState.AddModelError(nameof(model.ConnectionTypeId), "El tipo de conexión seleccionado no es válido.");
             await PopulateRegisterListsAsync(model, model.SearchName);
+            await ApplySelectedClientAsync(model, hideSearchResults: true);
             return View(model);
         }
 
@@ -91,6 +178,7 @@ public class ClientConnectionsController(
         {
             ModelState.AddModelError(string.Empty, "Ya existe un registro para este cliente y tipo de conexión.");
             await PopulateRegisterListsAsync(model, model.SearchName);
+            await ApplySelectedClientAsync(model, hideSearchResults: true);
             return View(model);
         }
 
@@ -240,6 +328,29 @@ public class ClientConnectionsController(
             .ToListAsync();
     }
 
+    private async Task ApplySelectedClientAsync(RegisterClientConnectionViewModel model, bool hideSearchResults)
+    {
+        if (string.IsNullOrWhiteSpace(model.TeamSupportClientId))
+        {
+            return;
+        }
+
+        var client = await teamSupportDbContext.Clients
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.CustomerId == model.TeamSupportClientId);
+
+        if (client is null)
+        {
+            return;
+        }
+
+        model.SelectedClientName = client.DisplayName;
+        if (hideSearchResults)
+        {
+            model.AvailableClients = [];
+        }
+    }
+
     private async Task<IReadOnlyList<TeamSupportClient>> SearchClientsAsync(string? searchName)
     {
         var name = searchName?.Trim();
@@ -255,7 +366,8 @@ public class ClientConnectionsController(
             .AsNoTracking()
             .Where(c =>
                 (c.CompanyName != null && EF.Functions.ILike(c.CompanyName, namePattern)) ||
-                (c.RazonSocial != null && EF.Functions.ILike(c.RazonSocial, namePattern)))
+                (c.RazonSocial != null && EF.Functions.ILike(c.RazonSocial, namePattern)) ||
+                (c.ErpId != null && EF.Functions.ILike(c.ErpId, namePattern)))
             .OrderBy(c => c.CompanyName)
             .ThenBy(c => c.RazonSocial)
             .Take(MaxClientSearchResults)
@@ -264,4 +376,8 @@ public class ClientConnectionsController(
 
     private static string EscapeLikePattern(string value) =>
         value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+
+    private static bool Contains(string? value, string term) =>
+        !string.IsNullOrWhiteSpace(value)
+        && value.Contains(term, StringComparison.OrdinalIgnoreCase);
 }

@@ -1,6 +1,6 @@
-using Conexiones.Web.Models.Api;
+using Soporte.Web.Models.Api;
 
-namespace Conexiones.Web.Services;
+namespace Soporte.Web.Services;
 
 public interface IClientConnectionLookupService
 {

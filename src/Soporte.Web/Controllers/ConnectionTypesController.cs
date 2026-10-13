@@ -1,12 +1,12 @@
-using Conexiones.Web.Data;
-using Conexiones.Web.Models.Entities;
-using Conexiones.Web.Models.ViewModels;
+using Soporte.Web.Data;
+using Soporte.Web.Models.Entities;
+using Soporte.Web.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-namespace Conexiones.Web.Controllers;
+namespace Soporte.Web.Controllers;
 
 [Authorize]
 public class ConnectionTypesController(ApplicationDbContext dbContext) : Controller

@@ -1,48 +1,45 @@
 ﻿@{
     ViewData["Title"] = "Inicio";
+    ViewData["Landing"] = true;
 }
 
-<div class="row align-items-center py-5">
-    <div class="col-lg-7">
-        <h1 class="display-5 fw-bold text-primary">Portal de Conexiones</h1>
-        <p class="lead text-muted mt-3">
-            Registre conexiones desde TeamSupport y administre los tipos de conexión
-            de su organización.
-        </p>
-        @if (User.Identity?.IsAuthenticated == true)
-        {
-            <div class="d-flex flex-wrap gap-2 mt-4">
-                <a class="btn btn-primary btn-lg" asp-controller="ClientConnections" asp-action="Register">
-                    Registrar conexión
-                </a>
-                <a class="btn btn-outline-primary btn-lg" asp-controller="ConnectionTypes" asp-action="Index">
-                    Tipos de conexión
-                </a>
-            </div>
-        }
-        else
-        {
-            <div class="d-flex flex-wrap gap-2 mt-4">
-                <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="Login">
-                    Iniciar sesión
-                </a>
-                <a class="btn btn-outline-primary btn-lg" asp-controller="Account" asp-action="Register">
-                    Crear cuenta
-                </a>
-            </div>
-        }
-    </div>
-    <div class="col-lg-5">
-        <div class="card shadow-sm border-0 bg-light">
-            <div class="card-body p-4">
-                <h5 class="card-title">Funcionalidades</h5>
-                <ul class="mb-0">
-                    <li>Acceso con correo y contraseña</li>
-                    <li>Lectura de clientes desde <code>teamsupport_db</code></li>
-                    <li>Registro de conexiones en <code>soporte_ts_db</code></li>
-                    <li>CRUD de tipos de conexión</li>
-                </ul>
-            </div>
+<div class="landing-hero">
+    <h1 class="landing-title">Bienvenido a Portal Soporte</h1>
+    <p class="landing-subtitle">
+        Tu espacio de apoyo a la gestión de tickets, integrado con TeamSupport. Consulta información complementaria y accede a herramientas que facilitan el trabajo diario de soporte.
+    </p>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="landing-hero-spacer" aria-hidden="true"></div>
+    }
+    else
+    {
+        <div class="landing-login-block">
+            <h2 class="landing-login-heading">Iniciar sesión</h2>
+            <p class="landing-login-hint">
+                Accede con tu correo y contraseña para usar el sistema
+            </p>
+            <a class="btn btn-telematel" asp-controller="Account" asp-action="Login">
+                <svg class="btn-telematel-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M17 8V7a5 5 0 0 0-10 0v1H5v14h14V8h-2Zm-8 0V7a3 3 0 0 1 6 0v1H9Z"/>
+                </svg>
+                Iniciar sesión
+            </a>
+            <p class="landing-login-note">
+                En local el acceso es con cuenta del portal. Auth0 se habilitará en producción.
+            </p>
+            <p class="landing-register-link">
+                ¿No tiene cuenta?
+                <a asp-controller="Account" asp-action="Register">Registrarse</a>
+            </p>
         </div>
+    }
+
+    <p class="landing-integrates-label">Esta aplicación integra:</p>
+    <div class="landing-pills">
+        <span class="landing-pill">TeamSupport</span>
+        <span class="landing-pill">PostgreSQL</span>
+        <span class="landing-pill">Identity</span>
     </div>
 </div>

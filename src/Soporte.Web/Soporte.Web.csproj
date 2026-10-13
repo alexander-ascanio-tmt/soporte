@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>aspnet-Conexiones.Web-32a1bc83-1aa7-4319-bfe8-a72a1d8cc0e4</UserSecretsId>
+    <UserSecretsId>aspnet-Soporte.Web-32a1bc83-1aa7-4319-bfe8-a72a1d8cc0e4</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

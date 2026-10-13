@@ -1,82 +1,232 @@
-@model IEnumerable<ClientConnection>
+@model ClientConnectionListPageViewModel
 @{
     ViewData["Title"] = "Conexiones registradas";
+
+    bool IsSelected(string? current, string value) =>
+        string.Equals(current, value, StringComparison.Ordinal);
+
+    string FormatDate(DateTime value)
+    {
+        var date = value.Kind == DateTimeKind.Utc ? value.ToLocalTime() : value;
+        return date.ToString("dd/MM/yyyy HH:mm");
+    }
+
+    string SortValue(DateTime value) => value.ToUniversalTime().ToString("o");
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Conexiones registradas</h2>
-    <a class="btn btn-primary" asp-action="Register">Registrar conexión</a>
+<div class="connections-page">
+    <div class="connections-page-header">
+        <div>
+            <h2 class="urgent-tickets-title mb-1">Conexiones registradas</h2>
+            <p class="text-muted mb-0">Registros de conexión de clientes en Portal Soporte para mostrar la conexión en Team Support mediante extensión de navegador.</p>
+        </div>
+        <a class="btn btn-primary" asp-action="Register">Registrar conexión</a>
+    </div>
+
+    <form method="get" asp-controller="ClientConnections" asp-action="Index" id="client-connections-filter-form">
+        <div class="urgent-toolbar">
+            <div class="urgent-search">
+                <span class="urgent-search-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="6.5"/>
+                        <path d="M16 16.5 21 21.5"/>
+                    </svg>
+                </span>
+                <input type="text"
+                       name="search"
+                       value="@Model.Query.Search"
+                       class="form-control urgent-search-input"
+                       placeholder="Buscar por cliente, ERP ID, razón social o notas" />
+            </div>
+            <button type="submit" class="btn urgent-search-button">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 5h16l-6.2 7.4V19l-3.6 2v-8.6Z"/>
+                </svg>
+                Buscar
+            </button>
+            @if (Model.HasActiveFilters)
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary urgent-clear-button">Limpiar</a>
+            }
+        </div>
+
+        <div class="urgent-filters">
+            <div class="urgent-filters-label">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 5h16l-6.2 7.4V19l-3.6 2v-8.6Z"/>
+                </svg>
+                <span>Filtros</span>
+            </div>
+
+            <label class="urgent-filter">
+                <span>Tipo:</span>
+                <select name="connectionTypeId" class="form-select form-select-sm urgent-filter-select" data-auto-submit>
+                    <option value="">Todos</option>
+                    @foreach (var option in Model.ConnectionTypes)
+                    {
+                        <option value="@option.Id" selected="@(Model.Query.ConnectionTypeId == option.Id)">@option.Name</option>
+                    }
+                </select>
+            </label>
+
+            <label class="urgent-filter">
+                <span>Registrado por:</span>
+                <select name="registeredBy" class="form-select form-select-sm urgent-filter-select" data-auto-submit>
+                    <option value="">Todos</option>
+                    @foreach (var option in Model.RegisteredByUsers)
+                    {
+                        <option value="@option" selected="@IsSelected(Model.Query.RegisteredBy, option)">@option</option>
+                    }
+                </select>
+            </label>
+
+            <label class="urgent-filter urgent-filter-end">
+                <span>Mostrar:</span>
+                <select name="limit" class="form-select form-select-sm urgent-filter-select" data-auto-submit>
+                    <option value="100" selected="@IsSelected(Model.Query.Limit, "100")">Últimos 100</option>
+                    <option value="200" selected="@IsSelected(Model.Query.Limit, "200")">Últimos 200</option>
+                    <option value="all" selected="@IsSelected(Model.Query.Limit, "all")">Todos</option>
+                </select>
+            </label>
+        </div>
+    </form>
+
+    @if (Model.Connections.Count == 0)
+    {
+        <div class="alert alert-info">
+            @(Model.TotalCount == 0 && !Model.HasActiveFilters
+                ? "No hay conexiones registradas todavía."
+                : "No hay conexiones que coincidan con la búsqueda o los filtros.")
+        </div>
+    }
+    else
+    {
+        <div class="urgent-tickets-wrap">
+            <table class="table urgent-tickets-table mb-0" id="client-connections-table">
+                <colgroup>
+                    <col data-col="client" style="width: 16rem;" />
+                    <col data-col="erp" style="width: 8rem;" />
+                    <col data-col="razon" style="width: 16rem;" />
+                    <col data-col="type" style="width: 10rem;" />
+                    <col data-col="registered" style="width: 11rem;" />
+                    <col data-col="by" style="width: 12rem;" />
+                    <col data-col="notes" style="width: 14rem;" />
+                    <col data-col="actions" style="width: 7rem;" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th data-col="client">
+                            <button type="button" class="urgent-th-sort" data-sort-type="text" aria-label="Ordenar por cliente">
+                                <span class="urgent-th-label">Cliente</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Cliente" tabindex="0"></span>
+                        </th>
+                        <th data-col="erp">
+                            <button type="button" class="urgent-th-sort" data-sort-type="text" aria-label="Ordenar por ERP ID">
+                                <span class="urgent-th-label">ERP ID</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna ERP ID" tabindex="0"></span>
+                        </th>
+                        <th data-col="razon">
+                            <button type="button" class="urgent-th-sort" data-sort-type="text" aria-label="Ordenar por razón social">
+                                <span class="urgent-th-label">Razón social</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Razón social" tabindex="0"></span>
+                        </th>
+                        <th data-col="type">
+                            <button type="button" class="urgent-th-sort" data-sort-type="text" aria-label="Ordenar por tipo de conexión">
+                                <span class="urgent-th-label">Tipo de conexión</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Tipo de conexión" tabindex="0"></span>
+                        </th>
+                        <th data-col="registered">
+                            <button type="button" class="urgent-th-sort" data-sort-type="date" aria-label="Ordenar por fecha de registro">
+                                <span class="urgent-th-label">Registrado</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Registrado" tabindex="0"></span>
+                        </th>
+                        <th data-col="by">
+                            <button type="button" class="urgent-th-sort" data-sort-type="text" aria-label="Ordenar por usuario">
+                                <span class="urgent-th-label">Por</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Por" tabindex="0"></span>
+                        </th>
+                        <th data-col="notes">
+                            <button type="button" class="urgent-th-sort" data-sort-type="text" aria-label="Ordenar por notas">
+                                <span class="urgent-th-label">Notas</span>
+                                <span class="urgent-sort-arrows" aria-hidden="true">
+                                    <svg viewBox="0 0 12 8"><path d="M6 1.5 1.8 6.2h8.4Z"/></svg>
+                                    <svg viewBox="0 0 12 8"><path d="M6 6.5 1.8 1.8h8.4Z"/></svg>
+                                </span>
+                            </button>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Notas" tabindex="0"></span>
+                        </th>
+                        <th data-col="actions">
+                            <span class="urgent-th-label">Acciones</span>
+                            <span class="urgent-col-resizer" role="separator" aria-orientation="vertical" aria-label="Redimensionar columna Acciones" tabindex="0"></span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Connections)
+                {
+                    <tr class="table-row-link"
+                        data-href="@Url.Action("Details", new { id = item.Id })"
+                        role="link"
+                        tabindex="0"
+                        aria-label="Ver detalle de @item.TeamSupportClientName">
+                        <td class="fw-semibold" data-sort-value="@item.TeamSupportClientName">@item.TeamSupportClientName</td>
+                        <td data-sort-value="@(item.TeamSupportClientCode ?? "")">@(item.TeamSupportClientCode ?? "—")</td>
+                        <td class="urgent-subject" title="@(item.TeamSupportClientRazonSocial ?? "")" data-sort-value="@(item.TeamSupportClientRazonSocial ?? "")">@(item.TeamSupportClientRazonSocial ?? "—")</td>
+                        <td data-sort-value="@item.ConnectionType.Name">
+                            <span class="urgent-number-badge">@item.ConnectionType.Name</span>
+                        </td>
+                        <td data-sort-value="@SortValue(item.RegisteredAt)">
+                            <span class="urgent-date">
+                                <svg class="urgent-date-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="3.5" y="5" width="17" height="15" rx="2"/>
+                                    <path d="M8 3.5v4M16 3.5v4M3.5 10h17"/>
+                                </svg>
+                                @FormatDate(item.RegisteredAt)
+                            </span>
+                        </td>
+                        <td data-sort-value="@(item.RegisteredByUserName ?? "")">@(item.RegisteredByUserName ?? "—")</td>
+                        <td class="urgent-subject" title="@(item.Notes ?? "")" data-sort-value="@(item.Notes ?? "")">@(string.IsNullOrWhiteSpace(item.Notes) ? "—" : item.Notes)</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
 
-@if (!Model.Any())
-{
-    <div class="alert alert-info">No hay conexiones registradas todavía.</div>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle table-connections">
-            <thead>
-                <tr>
-                    <th>Cliente</th>
-                    <th>ERP ID</th>
-                    <th>Razón social</th>
-                    <th>Tipo de conexión</th>
-                    <th>Registrado</th>
-                    <th>Por</th>
-                    <th>Notas</th>
-                    <th class="text-end">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var item in Model)
-            {
-                <tr class="table-row-link"
-                    data-href="@Url.Action("Details", new { id = item.Id })"
-                    role="link"
-                    tabindex="0"
-                    aria-label="Ver detalle de @item.TeamSupportClientName">
-                    <td class="fw-semibold">@item.TeamSupportClientName</td>
-                    <td>@(item.TeamSupportClientCode ?? "—")</td>
-                    <td>@(item.TeamSupportClientRazonSocial ?? "—")</td>
-                    <td><span class="badge text-bg-primary">@item.ConnectionType.Name</span></td>
-                    <td>@item.RegisteredAt.ToLocalTime().ToString("g")</td>
-                    <td>@(item.RegisteredByUserName ?? "—")</td>
-                    <td>@(string.IsNullOrWhiteSpace(item.Notes) ? "—" : item.Notes)</td>
-                    <td class="text-end">
-                        <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
-    </div>
-}
-
 @section Scripts {
-    <script>
-        document.querySelectorAll('tr.table-row-link').forEach((row) => {
-            const navigate = () => {
-                const href = row.dataset.href;
-                if (href) {
-                    window.location.href = href;
-                }
-            };
-
-            row.addEventListener('click', (event) => {
-                if (event.target.closest('a, button')) {
-                    return;
-                }
-
-                navigate();
-            });
-
-            row.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    navigate();
-                }
-            });
-        });
-    </script>
+    <script src="~/js/client-connections.js" asp-append-version="true"></script>
 }

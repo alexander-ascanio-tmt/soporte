@@ -1,47 +1,88 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Portal Conexiones</title>
+    <title>@ViewData["Title"] - Portal Soporte</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Conexiones.Web.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Soporte.Web.styles.css" asp-append-version="true" />
 </head>
-<body class="d-flex flex-column min-vh-100">
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-primary border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand fw-semibold" asp-area="" asp-controller="Home" asp-action="Index">Portal Conexiones</a>
+<body class="d-flex flex-column min-vh-100 landing-body">
+    <header class="landing-header">
+        <nav class="navbar navbar-expand-sm landing-nav">
+            <div class="container-portal landing-nav-bar">
+                <a class="navbar-brand landing-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <span class="landing-brand-mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M12 3a7 7 0 0 0-7 7v3H4v6h5v-6H8v-3a4 4 0 0 1 8 0v3h-1v6h5v-6h-1v-3a7 7 0 0 0-7-7Z"/>
+                        </svg>
+                    </span>
+                    Portal Soporte
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
                         aria-controls="mainNav" aria-expanded="false" aria-label="Alternar navegación">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse" id="mainNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Inicio</a>
-                        </li>
+                    <ul class="navbar-nav ms-auto align-items-center landing-nav-links">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="ClientConnections" asp-action="Index">Conexiones</a>
+                                <a class="nav-link" asp-controller="Home" asp-action="Index">
+                                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z"/>
+                                    </svg>
+                                    Inicio
+                                </a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                        <circle cx="6.5" cy="12" r="2.2"/>
+                                        <circle cx="17.5" cy="7" r="2.2"/>
+                                        <circle cx="17.5" cy="17" r="2.2"/>
+                                        <path d="M8.6 11.2 15.3 8.2M8.6 12.8 15.3 15.8"/>
+                                    </svg>
+                                    Conexiones de Clientes
+                                </a>
+                                <ul class="dropdown-menu landing-user-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="ClientConnections" asp-action="Register">
+                                            Registrar Conexión
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="ClientConnections" asp-action="Index">
+                                            Conexiones
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="ConnectionTypes" asp-action="Index">
+                                            Tipos de Conexión
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="ClientConnections" asp-action="Register">Registrar conexión</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="ConnectionTypes" asp-action="Index">Tipos de conexión</a>
+                                <a class="nav-link" asp-controller="UrgentTickets" asp-action="Index">
+                                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M5 7h14v12H5zM8 7V5.5A2.5 2.5 0 0 1 10.5 3h3A2.5 2.5 0 0 1 16 5.5V7"/>
+                                        <path d="M9 12h6M9 15h4"/>
+                                    </svg>
+                                    Tickets Urgentes
+                                </a>
                             </li>
                         }
+                        <partial name="_LoginPartial" />
                     </ul>
-                    <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container flex-grow-1">
+    <div class="container-portal flex-grow-1 @(ViewData["Landing"] is true ? "landing-main" : "")">
         @if (TempData["Success"] is string successMessage)
         {
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -56,14 +97,14 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
             </div>
         }
-        <main role="main" class="pb-5 mb-3">
+        <main role="main" class="@(ViewData["Landing"] is true ? "landing-content" : "pb-5 mb-3")">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted py-3 mt-auto">
-        <div class="container">
-            &copy; @DateTime.Now.Year - Valsoft · Portal Conexiones
+    <footer class="landing-footer mt-auto">
+        <div class="container-portal">
+            © @DateTime.Now.Year Telematel — Portal Soporte
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

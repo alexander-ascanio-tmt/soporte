@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using Conexiones.Web.Models.TeamSupport;
+using Soporte.Web.Models.TeamSupport;
 
-namespace Conexiones.Web.Models.ViewModels;
+namespace Soporte.Web.Models.ViewModels;
 
 public class RegisterClientConnectionViewModel
 {
@@ -17,8 +17,10 @@ public class RegisterClientConnectionViewModel
     [Display(Name = "Notas")]
     public string? Notes { get; set; }
 
-    [Display(Name = "Nombre o razón social")]
+    [Display(Name = "Búsqueda de Cliente")]
     public string? SearchName { get; set; }
+
+    public string? SelectedClientName { get; set; }
 
     public bool HasSearch => !string.IsNullOrWhiteSpace(SearchName);
 

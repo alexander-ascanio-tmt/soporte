@@ -1,5 +1,5 @@
-using Conexiones.Web.Data;
-using Conexiones.Web.Services;
+using Soporte.Web.Data;
+using Soporte.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +14,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddDbContext<TeamSupportDbContext>(options =>
-    options.UseNpgsql(teamSupportConnectionString));
+    options.UseNpgsql(teamSupportConnectionString)
+        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -51,7 +52,16 @@ builder.Services.AddCors(options =>
                     return false;
                 }
 
-                return uri.Host.EndsWith(".teamsupport.com", StringComparison.OrdinalIgnoreCase)
+                if (uri.Scheme.Equals("chrome-extension", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                var isLocal = uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                    || uri.Host.Equals("127.0.0.1", StringComparison.Ordinal);
+
+                return isLocal
+                    || uri.Host.EndsWith(".teamsupport.com", StringComparison.OrdinalIgnoreCase)
                     || uri.Host.Equals("teamsupport.com", StringComparison.OrdinalIgnoreCase);
             })
             .AllowAnyHeader()
@@ -71,6 +81,8 @@ builder.Services.AddScoped<IDatabaseMigrationService, DatabaseMigrationService>(
 builder.Services.AddScoped<IConnectionTypeSeedService, ConnectionTypeSeedService>();
 builder.Services.AddScoped<IClientConnectionLookupService, ClientConnectionLookupService>();
 builder.Services.AddScoped<ITicketUrgencyService, TicketUrgencyService>();
+builder.Services.AddScoped<IUrgentTicketListService, UrgentTicketListService>();
+builder.Services.AddScoped<ITicketSummaryService, TicketSummaryService>();
 
 var app = builder.Build();
 
@@ -91,9 +103,8 @@ else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
-
-app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseCors();

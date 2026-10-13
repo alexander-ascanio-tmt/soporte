@@ -1,0 +1,161 @@
+@model TicketSummaryViewModel
+@{
+    ViewData["Title"] = "Resumen de tickets";
+    var hasSelectedClient = !string.IsNullOrWhiteSpace(Model.TeamSupportClientId);
+}
+
+<div class="register-page">
+    <div class="register-page-header mb-4">
+        <div class="register-page-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
+                <path d="M4.5 9h7v1h-7zm0 2h4v1h-4z"/>
+            </svg>
+        </div>
+        <div>
+            <h2 class="register-page-title mb-1">@ViewData["Title"]</h2>
+            <p class="register-page-subtitle mb-0">Seleccione el cliente, el periodo y el tema. Se mostrará la información que emitirá MoneyPenny.</p>
+        </div>
+    </div>
+
+    <form asp-action="Index" method="post" id="ticket-summary-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="register-card register-card-form mb-4">
+            <div class="register-card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-9">
+                        <label asp-for="SearchName" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text register-input-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                                </svg>
+                            </span>
+                            <input asp-for="SearchName" class="form-control" placeholder="Texto que contenga empresa, razón social o ERP ID" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" name="intent" value="search" class="btn btn-search w-100" formnovalidate>
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-3" id="client-results-panel">
+                    @if (Model.HasSearch && !Model.AvailableClients.Any())
+                    {
+                        <div class="alert alert-warning register-alert mb-0">
+                            No se encontraron clientes con los criterios indicados.
+                        </div>
+                    }
+                    else if (Model.AvailableClients.Any())
+                    {
+                        <p class="text-muted small mb-2">@Model.AvailableClients.Count coincidencia(s). Seleccione el cliente para pasarlo al campo Cliente.</p>
+                        <div class="register-results-wrap">
+                            <table class="table register-results-table mb-0" id="clientResults">
+                                <thead>
+                                    <tr>
+                                        <th>Empresa</th>
+                                        <th>Razón social</th>
+                                        <th>ERP ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var client in Model.AvailableClients)
+                                {
+                                    <tr class="register-result-row"
+                                        data-client-id="@client.CustomerId"
+                                        data-client-name="@client.DisplayName"
+                                        tabindex="0"
+                                        role="button">
+                                        <td class="register-result-label">@(client.CompanyName ?? "—")</td>
+                                        <td>@(client.RazonSocial ?? "—")</td>
+                                        <td>@(client.ErpId ?? "—")</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+
+                <div class="mt-3">
+                    <label asp-for="TeamSupportClientId" class="form-label fw-semibold"></label>
+                    <input type="hidden" asp-for="TeamSupportClientId" id="selected-client-id" />
+                    <input type="text"
+                           asp-for="SelectedClientName"
+                           id="selected-client-name"
+                           class="form-control"
+                           readonly
+                           placeholder="Todavía no hay un cliente seleccionado" />
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-lg-4">
+                        <label asp-for="PeriodPreset" class="form-label fw-semibold"></label>
+                        <select asp-for="PeriodPreset" class="form-select" id="period-preset">
+                            <option value="">Personalizado (fechas)</option>
+                            <option value="3d">3 días</option>
+                            <option value="5d">5 días</option>
+                            <option value="1w">1 semana</option>
+                            <option value="1m">1 mes</option>
+                            <option value="3m">3 meses</option>
+                            <option value="6m">6 meses</option>
+                            <option value="1y">1 año</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="DateFrom" class="form-label fw-semibold"></label>
+                        <input asp-for="DateFrom" class="form-control" type="date" id="date-from" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="DateTo" class="form-label fw-semibold"></label>
+                        <input asp-for="DateTo" class="form-control" type="date" id="date-to" />
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label asp-for="Topic" class="form-label fw-semibold"></label>
+                    <textarea asp-for="Topic"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Ejemplos: Fallos con Mobile Servicios; Fallos de impresión GO!Manage"></textarea>
+                    <p class="register-hint mb-0 mt-2">
+                        Indique el tema del resumen. MoneyPenny usará este texto junto con el cliente y el periodo.
+                    </p>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 pt-4">
+                    <button type="submit" name="intent" value="fetch" class="btn btn-register" id="fetch-summary" disabled="@(!hasSelectedClient)">
+                        Obtener información
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="ticket-summary-output">
+            <div class="ticket-summary-output-header">
+                <h3 class="ticket-summary-output-title mb-0">Información de MoneyPenny</h3>
+                <button type="button" class="btn btn-sm btn-outline-secondary ticket-summary-copy" id="copy-moneypenny" aria-label="Copiar información">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="8" y="8" width="12" height="14" rx="2"/>
+                        <path d="M6 16H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    <span id="copy-moneypenny-label">Copiar</span>
+                </button>
+            </div>
+            <textarea id="moneypenny-payload"
+                      class="form-control ticket-summary-payload"
+                      rows="16"
+                      readonly
+                      placeholder="Aquí aparecerá la información que emita MoneyPenny para el cliente, el periodo y el tema indicados.">@Model.MoneyPennyPayload</textarea>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/ticket-summary.js" asp-append-version="true"></script>
+}

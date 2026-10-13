@@ -7,7 +7,7 @@ from pathlib import Path
 import openpyxl
 import psycopg2
 
-APPSETTINGS = Path(r"c:\Proyectos\Conexiones\src\Conexiones.Web\appsettings.Development.json")
+APPSETTINGS = Path(r"c:\Proyectos\Conexiones\src\Soporte.Web\appsettings.Development.json")
 EXCEL_CANDIDATES = [
     Path(r"c:\Users\ciro.ascanio\Downloads\Conexiones_revisado_contiene_v2.xlsx"),
     Path(r"c:\Users\ciro.ascanio\Downloads\Conexiones_revisado_contiene.xlsx"),

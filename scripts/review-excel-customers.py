@@ -9,7 +9,7 @@ import psycopg2
 
 EXCEL_IN = Path(r"c:\Users\ciro.ascanio\Downloads\Conexiones (1).xlsx")
 EXCEL_OUT = Path(r"c:\Users\ciro.ascanio\Downloads\Conexiones_revisado.xlsx")
-APPSETTINGS = Path(r"c:\Proyectos\Conexiones\src\Conexiones.Web\appsettings.Development.json")
+APPSETTINGS = Path(r"c:\Proyectos\Conexiones\src\Soporte.Web\appsettings.Development.json")
 
 
 def load_team_support_connection_string() -> str:

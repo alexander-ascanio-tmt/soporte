@@ -1,7 +1,7 @@
 @model RegisterClientConnectionViewModel
 @{
     ViewData["Title"] = "Registrar conexión";
-    var canRegister = Model.HasSearch && Model.AvailableClients.Any();
+    var hasSelectedClient = !string.IsNullOrWhiteSpace(Model.TeamSupportClientId);
 }
 
 <div class="register-page">
@@ -13,141 +13,115 @@
         </div>
         <div>
             <h2 class="register-page-title mb-1">@ViewData["Title"]</h2>
-            <p class="register-page-subtitle mb-0">Busque un cliente en TeamSupport y registre su tipo de conexión.</p>
+            <p class="register-page-subtitle mb-0">Busque el cliente, selecciónelo, indique el tipo de conexión y registre el alta en un solo proceso.</p>
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="register-card register-card-search mb-4">
-                <div class="register-card-header register-card-header-search">
-                    <span class="register-step">1</span>
-                    <span>Buscar cliente</span>
-                </div>
-                <div class="register-card-body">
-                    <form asp-action="Register" method="get" class="row g-3 align-items-end">
-                        <div class="col-md-9">
-                            <label asp-for="SearchName" class="form-label fw-semibold"></label>
-                            <div class="input-group">
-                                <span class="input-group-text register-input-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
-                                    </svg>
-                                </span>
-                                <input asp-for="SearchName" class="form-control" placeholder="Empresa o razón social" />
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-search w-100">Buscar</button>
-                        </div>
-                    </form>
-                    <p class="register-hint mb-0 mt-3">
-                        Busca texto contenido en <strong>CompanyName</strong> o <strong>Razón social</strong>.
-                    </p>
-                </div>
-            </div>
+    <div class="register-card register-card-form">
+        <div class="register-card-body">
+            <form asp-action="Register" method="post" id="register-connection-form">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-            <div class="register-card register-card-form">
-                <div class="register-card-header register-card-header-form">
-                    <span class="register-step">2</span>
-                    <span>Registrar conexión</span>
-                </div>
-                <div class="register-card-body">
-                    <form asp-action="Register" method="post" class="row g-4">
-                        <input type="hidden" asp-for="SearchName" />
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-                        <div class="col-12">
-                            <label asp-for="TeamSupportClientId" class="form-label fw-semibold"></label>
-                            @if (!Model.HasSearch)
-                            {
-                                <div class="register-empty-state">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="text-primary" viewBox="0 0 16 16" aria-hidden="true">
-                                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
-                                    </svg>
-                                    <span>Realice una búsqueda para ver clientes disponibles.</span>
-                                </div>
-                            }
-                            else if (!Model.AvailableClients.Any())
-                            {
-                                <div class="alert alert-warning register-alert mb-0">
-                                    No se encontraron clientes con los criterios indicados.
-                                </div>
-                            }
-                            else
-                            {
-                                <select asp-for="TeamSupportClientId" class="form-select register-select" id="clientSelect">
-                                    <option value="">-- Seleccione un cliente (@Model.AvailableClients.Count resultado(s)) --</option>
-                                    @foreach (var client in Model.AvailableClients)
-                                    {
-                                        <option value="@client.CustomerId"
-                                                data-erp-id="@(client.ErpId ?? "")"
-                                                data-razon-social="@(client.RazonSocial ?? "")">
-                                            @(client.CompanyName ?? "—")
-                                        </option>
-                                    }
-                                </select>
-                                <div id="clientDetails" class="register-client-details mt-3 d-none"></div>
-                            }
-                            <span asp-validation-for="TeamSupportClientId" class="text-danger"></span>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-9">
+                        <label asp-for="SearchName" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text register-input-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                                </svg>
+                            </span>
+                            <input asp-for="SearchName" class="form-control" placeholder="Texto que contenga empresa, razón social o ERP ID" />
                         </div>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" name="intent" value="search" class="btn btn-search w-100" formnovalidate>
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+                <p class="register-hint mb-3 mt-3">
+                    Pulse <strong>Buscar</strong> para ver coincidencias. Al seleccionar un cliente, su nombre pasará al campo <strong>Cliente</strong>.
+                </p>
 
-                        <div class="col-md-6">
-                            <label asp-for="ConnectionTypeId" class="form-label fw-semibold"></label>
-                            <select asp-for="ConnectionTypeId" class="form-select register-select">
-                                <option value="">-- Seleccione un tipo --</option>
-                                @foreach (var type in Model.ConnectionTypes)
+                <div class="mb-4" id="client-results-panel">
+                    @if (Model.HasSearch && !Model.AvailableClients.Any() && string.IsNullOrWhiteSpace(Model.TeamSupportClientId))
+                    {
+                        <div class="alert alert-warning register-alert mb-0">
+                            No se encontraron clientes con los criterios indicados.
+                        </div>
+                    }
+                    else if (Model.AvailableClients.Any())
+                    {
+                        <p class="text-muted small mb-2">
+                            @Model.AvailableClients.Count coincidencia(s). Seleccione el cliente para pasarlo al campo Cliente.
+                        </p>
+                        <div class="register-results-wrap">
+                            <table class="table register-results-table mb-0" id="clientResults">
+                                <thead>
+                                    <tr>
+                                        <th>Empresa</th>
+                                        <th>Razón social</th>
+                                        <th>ERP ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var client in Model.AvailableClients)
                                 {
-                                    <option value="@type.Id">@type.Name</option>
+                                    <tr class="register-result-row"
+                                        data-client-id="@client.CustomerId"
+                                        data-client-name="@client.DisplayName"
+                                        tabindex="0"
+                                        role="button">
+                                        <td class="register-result-label">@(client.CompanyName ?? "—")</td>
+                                        <td>@(client.RazonSocial ?? "—")</td>
+                                        <td>@(client.ErpId ?? "—")</td>
+                                    </tr>
                                 }
-                            </select>
-                            <span asp-validation-for="ConnectionTypeId" class="text-danger"></span>
+                                </tbody>
+                            </table>
                         </div>
-
-                        <div class="col-md-6">
-                            <label asp-for="Notes" class="form-label fw-semibold">Notas <span class="text-muted fw-normal">(opcional)</span></label>
-                            <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Observaciones sobre la conexión"></textarea>
-                            <span asp-validation-for="Notes" class="text-danger"></span>
-                        </div>
-
-                        <div class="col-12 d-flex flex-wrap gap-2 pt-2">
-                            <button type="submit" class="btn btn-register" disabled="@(!canRegister)">
-                                Registrar conexión
-                            </button>
-                            <a asp-action="Index" class="btn btn-outline-secondary">Ver registros</a>
-                        </div>
-                    </form>
+                    }
                 </div>
-            </div>
-        </div>
 
-        <div class="col-lg-4">
-            <div class="register-sidebar">
-                <h3 class="register-sidebar-title">Pasos</h3>
-                <ul class="register-sidebar-steps">
-                    <li class="@(Model.HasSearch ? "done" : "active")">
-                        <span class="register-sidebar-step-num">1</span>
-                        <div>
-                            <strong>Buscar</strong>
-                            <p>Introduzca nombre o razón social del cliente.</p>
-                        </div>
-                    </li>
-                    <li class="@(canRegister ? "active" : Model.HasSearch && !Model.AvailableClients.Any() ? "warning" : "")">
-                        <span class="register-sidebar-step-num">2</span>
-                        <div>
-                            <strong>Seleccionar</strong>
-                            <p>Elija el cliente y revise ERP ID y razón social.</p>
-                        </div>
-                    </li>
-                    <li>
-                        <span class="register-sidebar-step-num">3</span>
-                        <div>
-                            <strong>Registrar</strong>
-                            <p>Asigne el tipo de conexión y guarde el registro.</p>
-                        </div>
-                    </li>
-                </ul>
-            </div>
+                <div class="mb-4">
+                    <label asp-for="TeamSupportClientId" class="form-label fw-semibold"></label>
+                    <input type="hidden" asp-for="TeamSupportClientId" id="selected-client-id" />
+                    <input type="text"
+                           asp-for="SelectedClientName"
+                           id="selected-client-name"
+                           class="form-control"
+                           readonly
+                           placeholder="Todavía no hay un cliente seleccionado" />
+                    <span asp-validation-for="TeamSupportClientId" class="text-danger"></span>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label asp-for="ConnectionTypeId" class="form-label fw-semibold"></label>
+                        <select asp-for="ConnectionTypeId" class="form-select register-select">
+                            <option value="">-- Seleccione un tipo --</option>
+                            @foreach (var type in Model.ConnectionTypes)
+                            {
+                                <option value="@type.Id">@type.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ConnectionTypeId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Notes" class="form-label fw-semibold">Notas <span class="text-muted fw-normal">(opcional)</span></label>
+                        <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Observaciones sobre la conexión"></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 pt-4">
+                    <button type="submit" name="intent" value="register" class="btn btn-register" id="register-connection" disabled="@(!hasSelectedClient)">
+                        Registrar conexión
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Ver registros</a>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -156,28 +130,44 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         (function () {
-            const select = document.getElementById('clientSelect');
-            const details = document.getElementById('clientDetails');
-            if (!select || !details) return;
+            const table = document.getElementById('clientResults');
+            const resultsPanel = document.getElementById('client-results-panel');
+            const selectedId = document.getElementById('selected-client-id');
+            const selectedName = document.getElementById('selected-client-name');
+            const registerButton = document.getElementById('register-connection');
 
-            function updateClientDetails() {
-                const option = select.options[select.selectedIndex];
-                if (!option?.value) {
-                    details.classList.add('d-none');
-                    details.innerHTML = '';
-                    return;
+            function selectClient(id, name) {
+                if (selectedId) {
+                    selectedId.value = id;
                 }
-
-                const erpId = option.dataset.erpId || '—';
-                const razonSocial = option.dataset.razonSocial || '—';
-                details.classList.remove('d-none');
-                details.innerHTML =
-                    '<div class="register-detail-item"><span class="register-detail-label">ERP ID</span><span>' + erpId + '</span></div>' +
-                    '<div class="register-detail-item"><span class="register-detail-label">Razón social</span><span>' + razonSocial + '</span></div>';
+                if (selectedName) {
+                    selectedName.value = name;
+                }
+                if (registerButton) {
+                    registerButton.disabled = !id;
+                }
+                if (resultsPanel) {
+                    resultsPanel.replaceChildren();
+                }
             }
 
-            select.addEventListener('change', updateClientDetails);
-            updateClientDetails();
+            if (!table) {
+                return;
+            }
+
+            table.querySelectorAll('.register-result-row').forEach(function (row) {
+                function applySelection() {
+                    selectClient(row.dataset.clientId || '', row.dataset.clientName || '');
+                }
+
+                row.addEventListener('click', applySelection);
+                row.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        applySelection();
+                    }
+                });
+            });
         })();
     </script>
 }

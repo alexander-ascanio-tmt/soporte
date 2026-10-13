@@ -12,7 +12,7 @@ import psycopg2
 
 EXCEL_IN = Path(r"c:\Users\ciro.ascanio\Downloads\Conexiones (1).xlsx")
 EXCEL_OUT = Path(r"c:\Users\ciro.ascanio\Downloads\Conexiones_revisado_contiene.xlsx")
-APPSETTINGS = Path(r"c:\Proyectos\Conexiones\src\Conexiones.Web\appsettings.Development.json")
+APPSETTINGS = Path(r"c:\Proyectos\Conexiones\src\Soporte.Web\appsettings.Development.json")
 
 LEGAL_SUFFIXES = re.compile(
     r"\b(s\.?l\.?u?\.?|s\.?a\.?|s\.?l\.?|sociedad limitada|instalaciones)\b",

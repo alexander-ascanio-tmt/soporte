@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Conexiones.Web.Models.Entities;
+namespace Soporte.Web.Models.Entities;
 
 public class ConnectionType
 {

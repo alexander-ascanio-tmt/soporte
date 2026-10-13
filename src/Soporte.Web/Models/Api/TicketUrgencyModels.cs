@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Conexiones.Web.Models.Api;
+namespace Soporte.Web.Models.Api;
 
 public sealed class TicketUrgencyResponse
 {

@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: conexiones-postgres
+    container_name: soporte-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
